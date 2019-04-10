@@ -21,13 +21,21 @@ def create_table(conn, create_table_sql):
 
 
 def db_insert_comic(conn, comic_metadata):
-    last_issue_link = comic_metadata["issues_links"][0]
-    issues_number = [ s for s in re.findall(r'\d+\.?\d*', last_issue_link.split("/")[-1])]
-    num = 0
+    idx = 0
+    special_issues = []
+    while True:
+        num = 0
+        last_issue_link = comic_metadata["issues_links"][idx]
+        issues_number = [ s for s in re.findall(r'\d+\.?\d*', last_issue_link.split("/")[-1])]
 
-    if len(issues_number) != 0:
-        num = int(issues_number[-1])
-    
+        if len(issues_number) != 0:
+            num = int(issues_number[-1])
+        if num > 2000:
+            special_issues.append(comic_metadata["issues_links"][idx])
+            idx += 1
+        else:
+            break
+
     comic = (comic_metadata["title"], comic_metadata["author"], num+1)
     sql = ''' INSERT INTO comics(title,author,number_of_issues)
               VALUES(?,?,?) '''
