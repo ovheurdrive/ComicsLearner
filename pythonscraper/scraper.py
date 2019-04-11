@@ -37,7 +37,8 @@ def getComicMetadata(link):
 
         issues_raw = soup.find("div", { "class":"episode-list"}).find_all("a")
         metadata["issues_links"] = [ issue_raw["href"] for issue_raw in issues_raw ]
-    return metadata
+        return metadata
+    return None
 
 def getIssuePages(link):
     res = requests.get("{}/full".format(link))
@@ -85,6 +86,7 @@ def downloader(category):
 
 
 if __name__ == '__main__':
+    print("Test")
     kjson = getKeywords("comics.json")
     keyword = kjson["DC"][9]
     links = getRelevantComicLinks(keyword)

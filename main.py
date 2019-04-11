@@ -19,30 +19,58 @@ def create_table(conn, create_table_sql):
     except sqlite3.Error as e:
         print(e)
 
+def handle_special_issues(conn, special_issues, comic_id):
+    print("Adding special issues for comic {}".format(comic_id))
+    cur = conn.cursor()
+    for issue in special_issues:
+        sql =''' INSERT INTO issues(url,comic_id)
+              VALUES(?,?) '''
+        cur.execute(sql, (issue,comic_id))
+
+    cur.execute("SELECT number_of_issues FROM comics WHERE id=?", (comic_id,))
+    conn.commit()
+    comic_num = int(cur.fetchall()[0][0])
+    cur.execute("UPDATE comics SET number_of_issues=? WHERE id=?",(comic_num+len(special_issues),comic_id))
+    conn.commit()
 
 def db_insert_comic(conn, comic_metadata):
     idx = 0
     special_issues = []
+    # Get number of issues
     while True:
         num = 0
         last_issue_link = comic_metadata["issues_links"][idx]
         issues_number = [ s for s in re.findall(r'\d+\.?\d*', last_issue_link.split("/")[-1])]
 
         if len(issues_number) != 0:
+            # Edge case
+            if ('.' in issues_number[-1]) or ("Annual" in last_issue_link.split("/")[-1]):
+                special_issues.append(comic_metadata["issues_links"][idx])
+                idx += 1
+                continue
             num = int(issues_number[-1])
-        if num > 2000:
+        # Edge case
+        if num > 2500:
             special_issues.append(comic_metadata["issues_links"][idx])
             idx += 1
         else:
             break
 
+    cur = conn.cursor()
+    # Check if comic exists already
+    cur.execute("SELECT * FROM comics WHERE title=?", (comic_metadata["title"],))
+    exists = len(cur.fetchall()) > 0
+    if exists:
+        print("{} Already in the database...Skipping".format(comic_metadata["title"]))
+        return
+    # Insert title in database
     comic = (comic_metadata["title"], comic_metadata["author"], num+1)
     sql = ''' INSERT INTO comics(title,author,number_of_issues)
               VALUES(?,?,?) '''
-    cur = conn.cursor()
     cur.execute(sql, comic)
     comic_id = cur.lastrowid
     
+    # Insert issues
     for issue in range(int(num)+1):
         issue = (last_issue_link.replace(str(num),str(issue)), comic_id)
         sql =''' INSERT INTO issues(url,comic_id)
@@ -51,6 +79,11 @@ def db_insert_comic(conn, comic_metadata):
         cur.execute(sql, issue)
     
     conn.commit()
+
+    # Add special issues
+    if len(special_issues):
+        print(special_issues)
+        handle_special_issues(conn, special_issues, comic_id)
 
 
 def database_create_and_populate():
@@ -86,7 +119,8 @@ def database_create_and_populate():
                 links = sc.getRelevantComicLinks(keyword)
                 for comic in links:
                     metadata = sc.getComicMetadata(comic)
-                    db_insert_comic(conn, metadata)
+                    if metadata != None:
+                        db_insert_comic(conn, metadata)
 
         # kjson = sc.getKeywords("comics.json")
         # keyword = kjson["DC"][9]
@@ -106,6 +140,7 @@ def check_database_urls():
     rows = cur.fetchall()
     for row in rows:
         issue_id, issue_url, comic_id = row
+        print("Checking {}".format(issue_url), end='')
         res = requests.get(issue_url)
         if res.status_code != 200:
             print("{} url seems dead, Deleting id {} from database".format(issue_url,issue_id))
