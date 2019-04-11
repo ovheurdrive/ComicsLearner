@@ -19,6 +19,10 @@ def create_table(conn, create_table_sql):
     except sqlite3.Error as e:
         print(e)
 
+def rreplace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
 def handle_special_issues(conn, special_issues, comic_id):
     print("Adding special issues for comic {}".format(comic_id))
     cur = conn.cursor()
@@ -72,7 +76,7 @@ def db_insert_comic(conn, comic_metadata):
     
     # Insert issues
     for issue in range(int(num)+1):
-        issue = (last_issue_link.replace(str(num),str(issue)), comic_id)
+        issue = (rreplace(last_issue_link, str(num),str(issue),1), comic_id)
         sql =''' INSERT INTO issues(url,comic_id)
               VALUES(?,?) '''
         cur = conn.cursor()
@@ -121,41 +125,43 @@ def database_create_and_populate():
                     metadata = sc.getComicMetadata(comic)
                     if metadata != None:
                         db_insert_comic(conn, metadata)
-
-        # kjson = sc.getKeywords("comics.json")
-        # keyword = kjson["DC"][9]
-        # links = sc.getRelevantComicLinks(keyword)
-        # metadata = sc.getComicMetadata(links[8])
-        # db_insert_comic(conn, metadata)
     conn.close()
 
 
 def check_database_urls():
     cwd = os.getcwd()
     db_file = "{}/comics.db".format(cwd)
-    conn = createConnection(db_file)
-    cur = conn.cursor()
-    cur.execute("SELECT id,url,comic_id FROM issues")
+    comic_id = 0
+    while True:
+        conn = createConnection(db_file)
+        cur = conn.cursor()
+        cur.execute("SELECT id,url,comic_id FROM issues WHERE comic_id>?", (comic_id-1,))
+        try:
     
-    rows = cur.fetchall()
-    for row in rows:
-        issue_id, issue_url, comic_id = row
-        print("Checking {}".format(issue_url), end='')
-        res = requests.get(issue_url)
-        if res.status_code != 200:
-            print("{} url seems dead, Deleting id {} from database".format(issue_url,issue_id))
-            cur.execute("DELETE FROM issues WHERE id=?", (issue_id,))
-            conn.commit()
-            cur.execute("SELECT number_of_issues FROM comics WHERE id=?", (comic_id,))
-            comic_num = int(cur.fetchall()[0][0])
-            print("Decresing number of issues for comic {} by one".format(comic_id))
-            cur.execute("UPDATE comics SET number_of_issues=? WHERE id=?",(comic_num-1,comic_id))
-            conn.commit()
+            rows = cur.fetchall()
+            for row in rows:
+                issue_id, issue_url, comic_id = row
+                print("Checking {}".format(issue_url))
+                res = requests.get(issue_url)
+                if res.status_code != 200:
+                    print("{} url seems dead, Deleting id {} from database".format(issue_url,issue_id))
+                    cur.execute("DELETE FROM issues WHERE id=?", (issue_id,))
+                    conn.commit()
+                    cur.execute("SELECT number_of_issues FROM comics WHERE id=?", (comic_id,))
+                    comic_num = int(cur.fetchall()[0][0])
+                    print("Decreasing number of issues for comic {} by one".format(comic_id))
+                    cur.execute("UPDATE comics SET number_of_issues=? WHERE id=?",(comic_num-1,comic_id))
+                    conn.commit()
+            break
+        except KeyboardInterrupt:
+            print(comic_id)
+            break
+        except Exception as e:
+            print(e)
+            continue
     conn.close()
 
 
 def main():
     database_create_and_populate()
     check_database_urls()
-
-main()
