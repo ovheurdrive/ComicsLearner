@@ -2,24 +2,34 @@ import requests
 import json
 import os
 from operator import itemgetter
+import re
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.76 Safari/537.36'}
 api_key=""
 
 def load_api_key(file=None):
     cwd = os.getcwd()
-    secrets_file = "{}/../secrets.json".format(cwd) if file == None else file 
-    print(file)
+    secrets_file = "{}/secrets.json".format(cwd) if file == None else file
     with open(secrets_file, "r") as secrets:
         secs = json.load(secrets)
     return secs
 
+def query_builder(comic_title):
+    query = comic_title.replace("_", " ").rstrip().lstrip()
+    year = re.findall("(\(\d{4}\))", query)
+    if len(year) > 0:
+        query = query.replace(year[0],"").rstrip()
+        year = year[0].strip("()")
+    else:
+        year = None
+    return query, year
 
-def generic_search(query):
-    print("Searchin for '{}'".format(query))
+def generic_search(query, resource_type=None):
+    print("Searching for '{}'".format(query))
     query = query.replace(" ", "%20")
     req_url = "https://comicvine.gamespot.com/api/search?api_key={}&format=json&query={}".format(api_key, query)
-
+    if resource_type != None:
+        req_url += "&resources={}".format(resource_type)
     res = requests.get(req_url, headers=headers)
     if res.status_code != 200:
         raise Exception("Invalid query")

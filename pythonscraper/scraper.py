@@ -67,9 +67,10 @@ def imgDownloader(link, filename, path):
     pil_image = Image.open(BytesIO(image_data))
     width, height = pil_image.size
     pil_image = pil_image.convert('RGB')
-    pil_image = pil_image.resize((width//4, height//4))
+    pil_image = pil_image.resize((width//3, height//3))
 
     pil_image.save("comics/{}/{}.jpg".format(path,filename), format="JPEG", quality=90)
+    return filename
 
 
 

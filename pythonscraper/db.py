@@ -23,6 +23,11 @@ def rreplace(s, old, new, occurrence):
     li = s.rsplit(old, occurrence)
     return new.join(li)
 
+def parse_issue_number_from_link(url):
+    chapter = url.split("/")[-1]
+    number = chapter.replace("chapter-", "")
+    return number
+
 def handle_special_issues(conn, special_issues, comic_id):
     print("Adding special issues for comic {}".format(comic_id))
     cur = conn.cursor()
@@ -89,10 +94,23 @@ def db_insert_comic(conn, comic_metadata):
         print(special_issues)
         handle_special_issues(conn, special_issues, comic_id)
 
+def query(query: str, values: tuple):
+    print(query, values)
+    cwd = os.getcwd()
+    db_file = "{}/comics.db".format(cwd)
+    conn = createConnection(db_file)
+    cur = conn.cursor()
+    cur.execute(query, values)
+    if "SELECT" in query:
+        return cur.fetchall()
+    elif "INSERT" in query or "UPDATE" in query:
+        conn.commit()
+        return 0
+
 
 def database_create_and_populate():
     cwd = os.getcwd()
-    db_file = "{}/comics.db".format(cwd)
+    db_file = "{}/comics_labelled.db".format(cwd)
     if not os.path.exists(db_file):
         os.mknod(db_file)
 
@@ -112,11 +130,18 @@ def database_create_and_populate():
                                         publication_date text,
                                         FOREIGN KEY (comic_id) REFERENCES comics (id)
                                     );"""
+    sql_create_files_table = """CREATE TABLE IF NOT EXISTS files (
+                                        id integer PRIMARY KEY,
+                                        filename text NOT NULL,
+                                        issue_id integer NOT NULL,
+                                        label text NOT NULL,
+                                        FOREIGN KEY (issue_id) REFERENCES issue (id)
+                                    );"""
     
     if conn != None:
         create_table(conn, sql_create_comics_table)
         create_table(conn, sql_create_issues_table)
-    
+        create_table(conn, sql_create_files_table)
         kjson = sc.getKeywords("comics.json")
         for key,value in kjson.items():
             for keyword in value:
