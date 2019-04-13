@@ -14,7 +14,7 @@ import copy
 import argparse
 from sklearn.model_selection import train_test_split
 
-from load_dataset_train import load_dataset
+from load_dataset_train import load_dataset, transform_dataset
 
 
 # Typical command to train a network:
@@ -92,6 +92,7 @@ if __name__ == '__main__':
                 running_corrects = 0
 
                 # Iterate over data
+                # TODO: Problem here (give the correct inputs and labels)
                 for inputs, labels in dataloaders[phase]:
                     inputs = inputs.to(device)
                     labels = labels.to(device)
@@ -283,18 +284,24 @@ if __name__ == '__main__':
 
     print("Initializing Datasets and Dataloaders...")
 
-    # TODO: Load correctly image_datasets (for train, val and test)
+    # TODO: Possible problem here (creation of datasets)
     # Create training, validation and test datasets
     image_datasets = {}
-    dataset_full = load_dataset(data_dir, data_transforms)
+    dataset_full = load_dataset(data_dir)
 
     # Split in train, val and test from the image list
     np.random.seed(42)
-    image_datasets["train"], image_datasets["test"] = train_test_split(dataset_full.samples)
+    image_datasets["train"], image_datasets["test"] = train_test_split(dataset_full)
     image_datasets["train"], image_datasets["val"] = train_test_split(image_datasets["train"])
+
+    # Transform the datasets
+    image_datasets["train"] = transform_dataset(image_datasets["train"], data_transforms["train"])
+    image_datasets["val"] = transform_dataset(image_datasets["val"], data_transforms["val"])
+    image_datasets["test"] = transform_dataset(image_datasets["test"], data_transforms["test"])
 
     # Create training, validation and test dataloaders
     dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ["train", "val", "test"]}
+    print("HERE 1: ", dataloaders_dict["train"])
 
     # Detect if we have a GPU available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -342,6 +349,7 @@ if __name__ == '__main__':
     else:   
         # Train and evaluate
         dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ["train", "val", "test"]}
+        print("HERE 2: ", dataloaders_dict)
         model_ft, hist = train_model(model_ft, dataloaders_dict, criterion, optimizer_ft, num_epochs=num_epochs, is_inception=(model_name=="inception"))
 
     # Save the model in the 'models' directory, in the 'model_saves' directory
