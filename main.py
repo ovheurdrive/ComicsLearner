@@ -52,7 +52,7 @@ def main():
                     for page in pages[2:-1]:
                         url = page["src"]
                         filename = page["page"]
-                        year = re.findall("(\d{4})-\d{2}-\d{2}", issue[3])[0        ]
+                        year = re.findall("(\d{4})-\d{2}-\d{2}", issue[3])[0]
                         path = "{}/{}".format(comic_data[1], year)
                         final_filename = sc.imgDownloader(url, filename, path)
                         db.query("INSERT INTO files(filename, issue_id, label) VALUES(?,?,?)", ( "comics/{}/{}.jpg".format(path,final_filename), issue[0], year ))
