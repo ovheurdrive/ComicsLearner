@@ -9,10 +9,13 @@ import torchvision
 from torchvision import datasets, models, transforms
 import matplotlib.pyplot as plt
 import time
-import os
+import os, sys
 import copy
 import argparse
 from sklearn.model_selection import train_test_split
+
+from load_dataset_train import load_dataset
+
 
 # Typical command to train a network:
 # python3 -m supervised_model_train --batches=8 --epochs=15 --model=squeezenet --v=10
@@ -281,10 +284,9 @@ if __name__ == '__main__':
     print("Initializing Datasets and Dataloaders...")
 
     # TODO: Load correctly image_datasets (for train, val and test)
-
     # Create training, validation and test datasets
     image_datasets = {}
-    dataset_full = datasets.ImageFolder(data_dir, data_transforms)
+    dataset_full = load_dataset(data_dir, data_transforms)
 
     # Split in train, val and test from the image list
     np.random.seed(42)
