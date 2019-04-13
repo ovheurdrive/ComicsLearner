@@ -64,7 +64,7 @@ def imgDownloader(link, filename, path, retry: int = 0):
             os.mkdir("{}/comics{}".format(cwd,recursive_path))
 
     # Download file
-        while retry >= 0:
+    while retry >= 0:
         try:
             print("Downloading ", "{}.jpg".format(filename))
             image_data = requests.get(link, stream=True, verify=False).content
