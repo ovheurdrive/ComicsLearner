@@ -13,7 +13,7 @@ def getKeywords(file):
 
 def getRelevantComicLinks(keyword):
     print("Searching for", keyword)
-    res = requests.get("http://comicextra.com/comic-search?key={}".format(keyword))
+    res = requests.get("http://comicextra.com/comic-search?key={}".format(keyword), verify=False)
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     comic_list_raw = soup.find_all("div", {"class":"cartoon-box"})
     comic_links = [ raw_html.find("h3").find("a")["href"] for raw_html in comic_list_raw]
@@ -22,7 +22,7 @@ def getRelevantComicLinks(keyword):
 def getComicMetadata(link):
     print("Getting metadata for ", link)
     metadata = { "issues_links" : [], "title" : "", "released": "", "alternate title" : "", "author": ""  }
-    res = requests.get(link)
+    res = requests.get(link, verify=False)
     if res.status_code == 200:
         soup = bs4.BeautifulSoup(res.text, "html.parser")
         metadata_raw = soup.find_all("div", { "class":"movie-info-box"})
@@ -41,14 +41,14 @@ def getComicMetadata(link):
     return None
 
 def getIssuePages(link):
-    res = requests.get("{}/full".format(link))
+    res = requests.get("{}/full".format(link), verify=False)
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     page_raw = soup.find_all("img", { "class" : "chapter_img"})
     img_raw = page_raw[0].find_all("img")
     pages = [ { "page" : raw["alt"] , "src" : raw["src"] } for raw in img_raw ]
     return pages
 
-def imgDownloader(link, filename, path):
+def imgDownloader(link, filename, path, retry: int = 0):
     filename = filename.replace(" ", "_").replace("/", "_")
 
     # Create folders for file if they don't exist
@@ -62,15 +62,20 @@ def imgDownloader(link, filename, path):
             os.mkdir("{}/comics{}".format(cwd,recursive_path))
 
     # Download file
-    print("Downloading ", "{}.jpg".format(filename))
-    image_data = requests.get(link, stream=True).content
-    pil_image = Image.open(BytesIO(image_data))
-    width, height = pil_image.size
-    pil_image = pil_image.convert('RGB')
-    pil_image = pil_image.resize((width//3, height//3))
+    while retry >= 0:
+        try:
+            print("Downloading ", "{}.jpg".format(filename))
+            image_data = requests.get(link, stream=True, verify=False).content
+            pil_image = Image.open(BytesIO(image_data))
+            width, height = pil_image.size
+            pil_image = pil_image.convert('RGB')
+            pil_image = pil_image.resize((width//3, height//3))
 
-    pil_image.save("comics/{}/{}.jpg".format(path,filename), format="JPEG", quality=90)
-    return filename
+            pil_image.save("comics/{}/{}.jpg".format(path,filename), format="JPEG", quality=90)
+            return filename
+        except Exception as e:
+            print("Downloading failed : \n{}".format(e) )
+            retry -= 1
 
 
 

@@ -167,7 +167,7 @@ def check_database_urls():
             for row in rows:
                 issue_id, issue_url, comic_id = row
                 print("Checking {}".format(issue_url))
-                res = requests.get(issue_url)
+                res = requests.get(issue_url, verify=False)
                 if res.status_code != 200:
                     print("{} url seems dead, Deleting id {} from database".format(issue_url,issue_id))
                     cur.execute("DELETE FROM issues WHERE id=?", (issue_id,))
