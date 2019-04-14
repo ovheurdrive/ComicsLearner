@@ -42,10 +42,15 @@ for dirpath, dirnames, filenames in os.walk(origin_dir):
             else:
                 modern_age_images.append(image_path)
 
+
 n_gold = len(golden_age_images)
+print(n_gold)
 n_silver = len(silver_age_images)
+print(n_silver)
 n_bronze = len(bronze_age_images)
+print(n_bronze)
 n_modern = len(modern_age_images)
+print(n_modern)
 
 # Copie les dans le bon dossier : train/val/test
 ratio_train = 0.6
@@ -53,11 +58,12 @@ ratio_val = 0.2
 ratio_test = 0.2
 
 splits = {
-    "split_gold": [int(ratio_train * n_gold), int(ratio_val * n_gold)],
-    "split_silver": [int(ratio_train * n_silver), int(ratio_val * n_silver)],
-    "split_bronze": [int(ratio_train * n_bronze), int(ratio_val * n_bronze)],
-    "split_modern": [int(ratio_train * n_modern), int(ratio_val * n_modern)]
+    "split_gold": [int(ratio_train * n_gold), int(ratio_val * n_gold) + int(ratio_train * n_gold)],
+    "split_silver": [int(ratio_train * n_silver), int(ratio_val * n_silver) + int(ratio_train * n_silver)],
+    "split_bronze": [int(ratio_train * n_bronze), int(ratio_val * n_bronze) + int(ratio_train * n_bronze)],
+    "split_modern": [int(ratio_train * n_modern), int(ratio_val * n_modern) + int(ratio_train * n_modern)]
 }
+print(splits)
 
 # Copy golden images
 for i in range(splits["split_gold"][0]):
