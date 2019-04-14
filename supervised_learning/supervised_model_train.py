@@ -86,7 +86,7 @@ if __name__ == '__main__':
                 elif phase == "val":
                     model.eval()    # Set model to evaluate mode
                 else:
-                    model.test()    # Set model to test mode
+                    model.eval()    # Set model to test mode
             
                 running_loss = 0.0
                 running_corrects = 0
@@ -94,6 +94,7 @@ if __name__ == '__main__':
                 # Iterate over data
                 # TODO: Problem here (give the correct inputs and labels)
                 for inputs, labels in dataloaders[phase]:
+                    #print(inputs, labels)
                     inputs = inputs.to(device)
                     labels = labels.to(device)
 
@@ -284,10 +285,17 @@ if __name__ == '__main__':
 
     print("Initializing Datasets and Dataloaders...")
 
+    labels_to_idx = {
+        "Golden Age" : 0,
+        "Silver Age" : 1,
+        "Bronze Age" : 2,
+        "Modern Age" : 3
+    }
+
     # TODO: Possible problem here (creation of datasets)
     # Create training, validation and test datasets
     image_datasets = {}
-    dataset_full = load_dataset(data_dir)
+    dataset_full = load_dataset(data_dir, data_transforms["train"], labels_to_idx)
 
     # Split in train, val and test from the image list
     np.random.seed(42)
@@ -295,9 +303,9 @@ if __name__ == '__main__':
     image_datasets["train"], image_datasets["val"] = train_test_split(image_datasets["train"])
 
     # Transform the datasets
-    image_datasets["train"] = transform_dataset(image_datasets["train"], data_transforms["train"])
-    image_datasets["val"] = transform_dataset(image_datasets["val"], data_transforms["val"])
-    image_datasets["test"] = transform_dataset(image_datasets["test"], data_transforms["test"])
+    # image_datasets["train"] = transform_dataset(image_datasets["train"], data_transforms["train"])
+    # image_datasets["val"] = transform_dataset(image_datasets["val"], data_transforms["val"])
+    # image_datasets["test"] = transform_dataset(image_datasets["test"], data_transforms["test"])
 
     # Create training, validation and test dataloaders
     dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ["train", "val", "test"]}

@@ -18,7 +18,7 @@ class ComicPageDataset(Dataset):
     """
     Comic Page Dataset.
     """
-    def __init__(self, root_dir, all_comic_images, transform):
+    def __init__(self, root_dir, all_comic_images, transform, labels_to_idx):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -30,6 +30,7 @@ class ComicPageDataset(Dataset):
         self.root_dir = root_dir
         self.all_comic_images = all_comic_images
         self.transform = transform
+        self.labels_to_idx = labels_to_idx
 
     def __len__(self):
         return len(self.all_comic_images)
@@ -51,6 +52,8 @@ class ComicPageDataset(Dataset):
             label = "Bronze Age"
         else:
             label = "Modern Age"
+
+        label = self.labels_to_idx[label]
 
         # img_as_tensor = self.to_tensor(image)
 
