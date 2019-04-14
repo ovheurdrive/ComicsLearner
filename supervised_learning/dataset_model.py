@@ -18,7 +18,7 @@ class ComicPageDataset(Dataset):
     """
     Comic Page Dataset.
     """
-    def __init__(self, root_dir, all_comic_images):
+    def __init__(self, root_dir, all_comic_images, transform):
         """
         Args:
             root_dir (string): Directory with all the images.
@@ -26,8 +26,10 @@ class ComicPageDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
+        self.to_tensor = transforms.ToTensor()
         self.root_dir = root_dir
         self.all_comic_images = all_comic_images
+        self.transform = transform
 
     def __len__(self):
         return len(self.all_comic_images)
@@ -36,7 +38,8 @@ class ComicPageDataset(Dataset):
         img_name = self.all_comic_images[idx]["filename"]
         with open(os.path.join("..", img_name), 'rb') as f:
             image = Image.open(f)
-            image = image.convert('RGB')
+            if self.transform:
+                image = self.transform(image)
         # comic_name = self.all_comic_images[idx]["comic_name"]
         
         publication_year = self.all_comic_images[idx]["label"]
@@ -49,13 +52,6 @@ class ComicPageDataset(Dataset):
         else:
             label = "Modern Age"
 
-        sample = { "image": image, "label": label }
+        # img_as_tensor = self.to_tensor(image)
 
-        return sample
-    """
-    def __transform__(self):
-        if self.transform:
-            for i in range(self.__len__()):
-                sample = self.__getitem__(i)
-                sample = self.transform(sample["image"])
-    """
+        return (image, label)
