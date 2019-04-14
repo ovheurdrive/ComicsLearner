@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join("supervised_learning"))
 
 from dataset_model import ComicPageDataset
 
-def load_dataset(root_dir):
+def load_dataset(root_dir, data_transforms):
     files = db.query("SELECT * from files", ())
     all_comic_images = []
     for file in files:
@@ -27,7 +27,7 @@ def load_dataset(root_dir):
         new_page["comic_name"] = new_page["filename"].split("/")[1]
         all_comic_images.append(new_page)
 
-    comic_page_dataset = ComicPageDataset(root_dir=root_dir, all_comic_images=all_comic_images)
+    comic_page_dataset = ComicPageDataset(root_dir=root_dir, all_comic_images=all_comic_images, transform=data_transforms)
 
     return comic_page_dataset
 
