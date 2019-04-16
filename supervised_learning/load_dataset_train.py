@@ -15,7 +15,7 @@ import pythonscraper.db as db
 sys.path.insert(0, os.path.join("supervised_learning"))
 
 
-from dataset_model import ComicPageDataset
+from supervised_learning.dataset_model import ComicPageDataset
 
 def load_dataset(root_dir, data_transforms, labels_to_idx):
     files = db.query("SELECT * from files ORDER BY RANDOM() LIMIT 100", ())
