@@ -13,12 +13,15 @@ import torch.optim as optim
 
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
-from sklearn.metrics import accuracy_score, normalized_mutual_info_score
+from sklearn.metrics import accuracy_score, normalized_mutual_info_score, confusion_matrix
 
 sys.path.insert(0, os.path.join(".."))
 import pythonscraper.db as db
 sys.path.insert(0, os.path.join("supervised_learning"))
 from supervised_learning.load_dataset_train import load_dataset, transform_dataset
+
+import matplotlib.pyplot as plt
+import seaborn as sns; sns.set()
 
 
 # Ignore warnings
@@ -136,5 +139,11 @@ km = KMeans(n_jobs=-1, n_clusters=4, n_init=20)
 km.fit(pred_auto_train)
 pred = km.predict(pred_auto)
 
-normalized_mutual_info_score(val_y, pred)
-print(pred)
+plt.scatter(X[:, 0], X[:, 1], c=pred, s=50, cmap='viridis')
+
+mat = confusion_matrix(val_y, pred)
+sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False)
+plt.xlabel('true label')
+plt.ylabel('predicted label');
+
+print(normalized_mutual_info_score(val_y, pred))
