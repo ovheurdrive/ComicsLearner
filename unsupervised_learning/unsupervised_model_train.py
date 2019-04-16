@@ -63,15 +63,15 @@ image_datasets["train"], image_datasets["val"] = train_test_split(image_datasets
 # Training
 num_epochs = 5 #you can go for more epochs, I am using a mac
 batch_size = 8
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 # Create training, validation and test dataloaders
 dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ["train", "val", "test"]}
 
-ae = AutoEncoder().cuda()
+ae = AutoEncoder()
+ae = ae.to(device)
 distance = nn.MSELoss()
 optimizer = optim.Adam(ae.parameters(), lr=0.001)
-
-ae.train()
 
 for epoch in range(num_epochs):
     for phase in [ "train", "val", "test" ]:
@@ -85,7 +85,7 @@ for epoch in range(num_epochs):
 
         for data in dataloaders_dict[phase]:
             inputs, labels = data
-            inputs = Variable(inputs).cuda()
+            inputs = inputs.to(device)
             output = ae(inputs)
             loss = distance(output, inputs)
             optimizer.zero_grad()
@@ -100,16 +100,36 @@ val_x = []
 val_y = []
 for data in dataloaders_dict["train"]:
     inputs, labels = data
-    train_x.append(Variable(inputs).cuda())
+    inputs = inputs.to(device)
+    labels = labels.to(device)
+    train_x.append(inputs)
     train_y.append(labels)
 
 for data in dataloaders_dict["val"]:
     inputs, labels = data
-    val_x.append(Variable(inputs).cuda())
+    inputs = inputs.to(device)
+    labels = labels.to(device)
+    val_x.append(inputs)
     val_y.append(labels)
 
-pred_auto_train = [ ae.encoder(inp) for inp in train_x ]
-pred_auto = [ ae.encoder(inp) for inp in val_x ]
+print(ae.encoder(train_x[0]).size())
+# exit(0)
+pred_auto_train = []
+pred_auto = []
+
+for inp in train_x:
+    out = ae.encoder(inp)
+    size = out.size()
+    out = out.view(size[0]*size[1]*size[2]*size[3])
+    pred_auto_train.append(out.detach().cpu().numpy())
+
+for inp in val_x:
+    out = ae.encoder(inp)
+    size = out.size()
+    out = out.view(size[0]*size[1]*size[2]*size[3])
+    pred_auto.append(out.detach().cpu().numpy())
+
+print(pred_auto)
 
 km = KMeans(n_jobs=-1, n_clusters=4, n_init=20)
 
