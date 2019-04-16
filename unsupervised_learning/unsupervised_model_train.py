@@ -139,7 +139,7 @@ km = KMeans(n_jobs=-1, n_clusters=4, n_init=20)
 km.fit(pred_auto_train)
 pred = km.predict(pred_auto)
 
-plt.scatter(X[:, 0], X[:, 1], c=pred, s=50, cmap='viridis')
+plt.scatter(pred[:, 0], pred[:, 1], c=pred, s=50, cmap='viridis')
 
 mat = confusion_matrix(val_y, pred)
 sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False)
