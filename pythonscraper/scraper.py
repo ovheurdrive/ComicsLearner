@@ -4,6 +4,8 @@ import json
 import os
 from io import BytesIO
 from PIL import Image
+# Accept truncated image files
+Image.LOAD_TRUNCATED_IMAGES = True
 
 
 def getKeywords(file):

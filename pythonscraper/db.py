@@ -97,6 +97,7 @@ def db_insert_comic(conn, comic_metadata):
 def query(query: str, values: tuple):
     print(query, values)
     cwd = os.getcwd()
+    cwd = os.path.join(cwd, "..")
     db_file = "{}/comics.db".format(cwd)
     conn = createConnection(db_file)
     cur = conn.cursor()
