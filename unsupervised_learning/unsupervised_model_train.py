@@ -28,9 +28,11 @@ import pythonscraper.db as db
 sys.path.insert(0, os.path.join("unsupervised_learning"))
 
 from autoencoder import AutoEncoder
-import pythonscraper.db as db
+input_size = 224
 
 trainTransforms = tv.transforms.Compose([
+                 tv.transforms.Resize(input_size),
+                 tv.transforms.CenterCrop(input_size),
                  tv.transforms.ToTensor(), 
                  tv.transforms.Normalize(
                      (0.4914, 0.4822, 0.4466), 
@@ -61,7 +63,7 @@ num_epochs = 5 #you can go for more epochs, I am using a mac
 batch_size = 8
 
 # Create training, validation and test dataloaders
-dataloaders_dict = {x: DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in ["train", "val", "test"]}
+dataloader = DataLoader(image_datasets["train"], batch_size=batch_size, shuffle=True, num_workers=4) 
 
 ae = AutoEncoder().cuda()
 distance = nn.MSELoss()
@@ -70,7 +72,7 @@ optimizer = optim.Adam(ae.parameters(), lr=0.001)
 ae.train()
 
 for epoch in range(num_epochs):
-    for data in dataloaders_dict["train"]:
+    for data in dataloader:
         inputs, labels = data
         inputs = Variable(inputs).cuda()
         output = ae(inputs)
@@ -78,4 +80,4 @@ for epoch in range(num_epochs):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-    print('epoch [{}/{}], loss:{:.4f}'.format(epoch+1, num_epochs, loss.data()))
+    print('epoch [{}/{}], loss:{:.4f}'.format(epoch+1, num_epochs, loss.item()))
