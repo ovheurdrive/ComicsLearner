@@ -144,6 +144,6 @@ plt.scatter(pred[:, 0], pred[:, 1], c=pred, s=50, cmap='viridis')
 mat = confusion_matrix(val_y, pred)
 sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False)
 plt.xlabel('true label')
-plt.ylabel('predicted label');
+plt.ylabel('predicted label')
 
 print(normalized_mutual_info_score(val_y, pred))
