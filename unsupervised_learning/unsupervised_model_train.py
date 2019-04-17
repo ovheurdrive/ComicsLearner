@@ -59,40 +59,44 @@ def train_ae(dataloaders_dict, device=0, num_epochs=5):
 
 
 def cluster(dataloaders_dict, ae, device=0):
-
     train_x = []
-    train_y = []
+    train_y = np.array([])
     val_x = []
-    val_y = []
+    val_y = np.array([])
     for data in dataloaders_dict["train"]:
         inputs, labels = data
         inputs = inputs.to(device)
         train_x.append(inputs)
-        train_y.append(labels)
+        train_y = np.concatenate(( train_y, labels.numpy()))
 
     for data in dataloaders_dict["val"]:
         inputs, labels = data
         inputs = inputs.to(device)
         val_x.append(inputs)
-        val_y.append(labels)
+        val_y = np.concatenate(( val_y, labels.numpy()))
 
-    pred_auto_train = []
-    pred_auto = []
+    pred_auto_train = None
+    pred_auto = None
 
     for inp in train_x:
         out = ae.encoder(inp)
-        out = out.view(746496)
-        pred_auto_train.append(out.detach().cpu().numpy())
+        size = out.size()
+        out = out.view(size[0], -1)
+        np_out = out.detach().cpu().numpy()
+        pred_auto_train = np.concatenate( (pred_auto_train, np_out) , axis=0) if pred_auto_train is not None else np_out
 
     for inp in val_x:
         out = ae.encoder(inp)
-        out = out.view(746496)
-        pred_auto.append(out.detach().cpu().numpy())
+        size = out.size()
+        out = out.view(size[0], -1)
+        np_out = out.detach().cpu().numpy()
+        pred_auto = np.concatenate( (pred_auto, np_out) , axis=0) if pred_auto is not None else np_out
 
     km = KMeans(n_jobs=-1, n_clusters=4, n_init=20)
 
     km.fit(pred_auto_train)
     pred = km.predict(pred_auto)
+
     build_plots(pred_auto, pred, val_y)
 
 
@@ -115,15 +119,13 @@ def build_plots(pred_auto, pred, val_y):
 def build_dataloaders(data_dir, trainTransforms, labels_to_idx, batch_size, test=None):
      # Here load data
     image_datasets = {}
-    phase = ["train", "val"]
+    phase = ["train", "val", "test"]
     dataset_full = load_dataset(data_dir, trainTransforms, labels_to_idx)
 
     # Split in train, val and test from the image list
     np.random.seed(42)
     image_datasets["train"], image_datasets["val"] = train_test_split(dataset_full)
-    if test:
-        image_datasets["train"], image_datasets["test"] = train_test_split(image_datasets["train"])
-        phase.append("test")
+    image_datasets["train"], image_datasets["test"] = train_test_split(image_datasets["train"])
 
     # Create training, validation and test dataloaders
     dataloaders_dict = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=batch_size, shuffle=True, num_workers=4) for x in phase}
@@ -149,11 +151,9 @@ def main():
         "Modern Age" : 3
     }
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    dataset_dict_train = build_dataloaders(data_dir, trainTransforms, labels_to_idx, 8, True)
-    ae = train_ae(dataset_dict_train, device, 3)
-
-    dataset_dict_cluster = build_dataloaders(data_dir, trainTransforms, labels_to_idx, 1)
-    cluster(dataset_dict_cluster, ae, device)
+    dataloaders = build_dataloaders(data_dir, trainTransforms, labels_to_idx, 8, True)
+    ae = train_ae(dataloaders, device, 3)
+    cluster(dataloaders, ae, device)
 
 
 if __name__ == "__main__":
