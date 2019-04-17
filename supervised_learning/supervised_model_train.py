@@ -92,7 +92,6 @@ if __name__ == '__main__':
                 running_corrects = 0
 
                 # Iterate over data
-                # TODO: Problem here (give the correct inputs and labels)
                 for inputs, labels in dataloaders[phase]:
                     #print(inputs, labels)
                     inputs = inputs.to(device)
@@ -292,7 +291,6 @@ if __name__ == '__main__':
         "Modern Age" : 3
     }
 
-    # TODO: Possible problem here (creation of datasets)
     # Create training, validation and test datasets
     image_datasets = {}
     dataset_full = load_dataset(data_dir, data_transforms["train"], labels_to_idx)
