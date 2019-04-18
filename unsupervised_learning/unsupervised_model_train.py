@@ -22,7 +22,7 @@ import pythonscraper.db as db
 sys.path.insert(0, os.path.join("supervised_learning"))
 from supervised_learning.load_dataset_train import load_dataset, transform_dataset
 sys.path.insert(0, os.path.join("unsupervised_learning"))
-from autoencoder import AutoEncoder
+from autoencoder import AutoEncoder, AutoEncoder2
 
 
 
@@ -44,7 +44,7 @@ def train_ae(dataloaders_dict, device=0, num_epochs=5):
                 ae.eval()
 
             for data in dataloaders_dict[phase]:
-                inputs, labels = data
+                inputs, _ = data
                 inputs = inputs.to(device)
                 with torch.set_grad_enabled(phase == "train"):
                     output = ae(inputs)
